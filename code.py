@@ -14,29 +14,39 @@ import nltk
 nltk.download() # A box will pop up - download all
 	  
 data = pd.read_table("speech_data_extend.txt",encoding="utf-8")
-data.columns
-raw_txt = data
-raw_txtcolumns
+raw_txt = str(data)
+print(raw_txt)
 
 ################## Preprocess Data ####################
 
 # 1.  tokenize data: split raw character string into individual elements of interest-- words, numbers, punctuation
 from nltk.tokenize import sent_tokenize, word_tokenize
+print(word_tokenize(raw_txt))
+word_tok = (word_tokenize(raw_txt))
 
-word = word_tokenize(raw_txt)
-word = print(sent_tokenize(raw_txt))
 
 # 2. Remove non-alphabetic characters
 
 
 # 3. Remove stopwords using a list of your choice
+from nltk.corpus import stopwords
+set(stopwords.words('english'))
+stop_words = set(stopwords.words('english'))
+filtered_sentence = [w for w in word_tok if not w in stop_words]
+filtered_sentence = []
 
+for w in word_tok:
+    if w not in stop_words:
+        filtered_sentence.append(w)
+
+print(word_tok)
+print(filtered_sentence)
 
 
 # 4. Stem the data using the Porter stemmer 
 
-
-
+from nltk.stem import PorterStemmer
+ps = PorterStemmer()
 
 # 5. Compute the corpus-level tf-idf score for every term, and choose a cutoﬀ below which to remove word 
 
