@@ -10,28 +10,38 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import nltk
+import topicmodels
 
 nltk.download() # A box will pop up - download all
-with open("speech_data_extend.txt", 'r') as myfile:
-    data=myfile.read().replace('\n', '')
 
-type(data)
+# with open("speech_data_extend.txt", 'r') as myfile:
+    #data=myfile.read().replace('\n', '')
+
+data = pd.read_table("speech_data_extend.txt", encoding="utf-8") # dataframe with 3 columns rows are sentences
 len(data)
-raw_txt = data
+data = data.to_string()
 
 ################## Preprocess Data ####################
 
-# 1. Remove non-alphabetic characters (step two in instructions, but doing this before tokening was easier)
+# 1.  tokenize data: split raw character string into individual elements of interest-- words, numbers, punctuation
+from nltk.tokenize import sent_tokenize, word_tokenize
+word_tok = (word_tokenize(data))
+len(word_tok)
+type(word_tok)
+word_tok = str(word_tok)
+
+# 2. Remove non-alphabetic characters
 import re
 
-word_tok = re.sub(r'([^\s\w]|_)+', '', raw_txt)
-len(word_tok)
+alpha = str.lower(word_tok)
+len(alpha)
 
-# 2.  tokenize data: split raw character string into individual elements of interest-- words, numbers, punctuation
-from nltk.tokenize import sent_tokenize, word_tokenize
-word_tok = (word_tokenize(word_tok))
-len(word_tok)
+def stripNonAlphaNum(alpha):
+    import re
+    return re.compile(r'\W+', re.UNICODE).split(alpha)
 
+wordlist = stripNonAlphaNum(alpha)
+len(wordlist)
 
 # 3. Remove stopwords using a list of your choice
 from nltk.corpus import stopwords
@@ -41,12 +51,13 @@ stop_words = set(stopwords.words('english'))
 filtered_sentence = [w for w in word_tok if not w in stop_words]
 filtered_sentence = []
 
-for w in word_tok:
+for w in wordlist:
     if w not in stop_words:
         filtered_sentence.append(w)
 
 print(filtered_sentence)
 len(filtered_sentence)
+
 
 # 4. Stem the data using the Porter stemmer 
 from nltk.stem import PorterStemmer
@@ -56,10 +67,14 @@ for w in filtered_sentence:
     print(ps.stem(w))
 
 
+
 # 5. Compute the corpus-level tf-idf score for every term, and choose a cutoﬀ below which to remove word 
+from nltk.probability import FreqDist
 
-
-
+fdist = FreqDist()
+for word in word_tokenize(filtered_sentence):
+   fdist[word.lower()] += 1
+         
 
 # 6. Form the document-term matrix
 
