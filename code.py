@@ -11,12 +11,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import nltk
 
-nltk.download() # A box will pop up - download all
+nltk.download() # A box will pop up - download all- will take a little time
 
-# with open("speech_data_extend.txt", 'r') as myfile:
-    #data=myfile.read().replace('\n', '')
-
-data = pd.read_table("speech_data_extend.txt", encoding="utf-8") # dataframe with 3 columns rows are sentences
+data = pd.read_table("speech_data_extend.txt", encoding="utf-8") # dataframe with 3 columns -  rows are sentences
 len(data)
 data = data.to_string()
 
@@ -66,17 +63,13 @@ for w in filtered_sentence:
     stem = list.append(ps.stem(w))
 len(list)
 
-stem = str(list)
-
-# 5. Compute the corpus-level tf-idf score for every term, and choose a cutoﬀ below which to remove word 
+# 5 & 6 . Compute the corpus-level tf-idf score for every term, and choose a cutoﬀ below which to remove word - Form the document-term matrix
 from sklearn.feature_extraction.text import CountVectorizer
 
-count_vectorizer = CountVectorizer(min_df=1)
+count_vectorizer = CountVectorizer(min_df=2)
 term_freq_matrix = count_vectorizer.fit_transform(list)
 print("Vocabulary:", count_vectorizer.vocabulary_)
 
-
-# 6. Form the document-term matrix
 
 from sklearn.feature_extraction.text import TfidfTransformer
 
@@ -85,8 +78,10 @@ tfidf.fit(term_freq_matrix)
 tf_idf_matrix = tfidf.transform(term_freq_matrix)
 print(tf_idf_matrix.todense())
 
-################## Run Analysis ####################
+tf_idf_matrix.shape # with 2 min_df
 
+
+################## Run Analysis ####################
 
 
 ################## Perform a SVD ####################
