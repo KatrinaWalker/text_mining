@@ -82,7 +82,25 @@ tf_idf_matrix.shape # with 2 min_df
 
 
 ################## Run Analysis ####################
+# A create dictionary to assess heterogeneaity 
+d = pd.read_excel("LoughranMcDonald_MasterDictionary_2014.xlsx")
+d.shape
+d.dtypes
 
+
+dic = d.to_string()
+dic_tok = (word_tokenize(dic))
+len(dic_tok)
+
+ps = PorterStemmer()
+dic = []
+s = d['Word']
+
+s = pd.Series.tolist(s)
+
+for w in s:
+    stem = dic.append(ps.stem(w))
+len(dic)
 
 ################## Perform a SVD ####################
 
