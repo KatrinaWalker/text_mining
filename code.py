@@ -10,7 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import nltk
-import topicmodels
 
 nltk.download() # A box will pop up - download all
 
@@ -24,15 +23,13 @@ data = data.to_string()
 ################## Preprocess Data ####################
 
 # 1.  tokenize data: split raw character string into individual elements of interest-- words, numbers, punctuation
-from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.tokenize import word_tokenize
 word_tok = (word_tokenize(data))
 len(word_tok)
 type(word_tok)
 word_tok = str(word_tok)
 
 # 2. Remove non-alphabetic characters
-import re
-
 alpha = str.lower(word_tok)
 len(alpha)
 
@@ -48,7 +45,7 @@ from nltk.corpus import stopwords
 set(stopwords.words('english'))
 
 stop_words = set(stopwords.words('english'))
-filtered_sentence = [w for w in word_tok if not w in stop_words]
+filtered_sentence = [w for w in wordlist if not w in stop_words]
 filtered_sentence = []
 
 for w in wordlist:
@@ -60,25 +57,33 @@ len(filtered_sentence)
 
 
 # 4. Stem the data using the Porter stemmer 
-from nltk.stem import PorterStemmer
+from nltk.stem.porter import PorterStemmer
+
 ps = PorterStemmer()
+list = []
 
 for w in filtered_sentence:
-    print(ps.stem(w))
+    stem = list.append(ps.stem(w))
+len(list)
 
-
+stem = str(list)
 
 # 5. Compute the corpus-level tf-idf score for every term, and choose a cutoﬀ below which to remove word 
-from nltk.probability import FreqDist
+from sklearn.feature_extraction.text import CountVectorizer
 
-fdist = FreqDist()
-for word in word_tokenize(filtered_sentence):
-   fdist[word.lower()] += 1
-         
+count_vectorizer = CountVectorizer(min_df=1)
+term_freq_matrix = count_vectorizer.fit_transform(list)
+print("Vocabulary:", count_vectorizer.vocabulary_)
+
 
 # 6. Form the document-term matrix
 
+from sklearn.feature_extraction.text import TfidfTransformer
 
+tfidf = TfidfTransformer(norm="l2")
+tfidf.fit(term_freq_matrix)
+tf_idf_matrix = tfidf.transform(term_freq_matrix)
+print(tf_idf_matrix.todense())
 
 ################## Run Analysis ####################
 
