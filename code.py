@@ -205,13 +205,17 @@ tf.index = dt_matrix.index
 
 # Create a tf_idf matrix
 tf_idf = tf
-tf_idf.index = tf.index
+#tf_idf.index = tf.index
 
 for w in tf_idf.index:
     tf_idf.loc[w] = tf.loc[w]* idf[w]
 
 # Save the tf_idf matrix to a csv file for future use
-tf_idf.to_csv("tf_idf.csv", sep = ";", index=True)
+tf_idf.to_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/tf_idf.csv", sep = ";", index=True)
+
+tf_idf = pd.DataFrame.from_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/tf_idf.csv", sep = ";", index_col = 0)
+tf_idf = np.transpose(tf_idf)
+
 
 # Compute an SVD of the tf_idf matrix
 U, s, V = np.linalg.svd(tf_idf)
@@ -222,15 +226,47 @@ pve = s/sum(s)
 plt.plot(pve)
 plt.show()
 
-# Construct an approximate tf_idf matrix with the first 300 principal components
-U_hat = U[:,0:300]
-s_hat = s[0:300]
-V_hat = V[0:300, 0:300]
+# Construct an approximate tf_idf matrix with the first 200 principal components
+U_hat = U[:,0:200]
+s_hat = s[0:200]
+V_hat = V[0:200, 0:200]
 tf_idf_hat = np.matmul(np.matmul(U_hat, np.diag(s_hat)), V_hat)
+tf_idf_hat.shape
 
-tf_idf = np.transpose(tf_idf)
-tf_idf_hat = np.transpose(tf_idf_hat)
-tf_idf_hat = pd.DataFrame(tf_idf_hat)
+# Create a dataframe with years where most months were in recession as 1 and 0 otherwise
+recession = pd.read_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/USREC.csv", index_col = False)
+recession['DATE'] = pd.to_datetime(recession['DATE'], format='%Y-%m-%d')
+recession = recession.groupby(recession['DATE'].map(lambda x: x.year)).mean().round()
+recession['year'] = recession.index
+
+# Create index for recession years and for growth years
+rec = [i for i in range(len(recession.index)) if recession.iloc[i,0] == 1]
+grow = [i for i in range(len(recession.index)) if recession.iloc[i,0] == 0]
+
+# Compute cosine similarities between all documents, and subset to get those within recession years, 
+# within growth years, and between recession and growth years
+from sklearn.metrics.pairwise import cosine_similarity
+cos = cosine_similarity(tf_idf)
+cosine_rec = cos[rec,:][:,rec]
+cosine_grow = cos[grow,:][:, grow]
+cosine_cross = cos[rec,:][:, grow]
+
+# Print result
+print('cosine similarity within recession years', np.mean(cosine_rec))
+print('cosine similarity within growth years', np.mean(cosine_grow))
+print('cosine similarity between recession and growth years', np.mean(cosine_cross))
+
+# Start again with tf_idf_hat
+cos_hat = cosine_similarity(tf_idf_hat)
+cosine_rec_hat = cos_hat[rec,:][:,rec]
+cosine_grow_hat = cos[grow,:][:, grow]
+cosine_cross_hat = cos[rec,:][:, grow]
+
+# Print result
+print('cosine similarity within recession years', np.mean(cosine_rec_hat))
+print('cosine similarity within growth years', np.mean(cosine_grow_hat))
+print('cosine similarity between recession and growth years', np.mean(cosine_cross_hat))
+
 
 
 
