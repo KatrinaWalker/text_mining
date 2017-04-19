@@ -16,7 +16,7 @@ import string
 
 #nltk.download() # A box will pop up - download all- will take a little time
 
-data_origin = pd.read_table("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/speech_data_extend.txt", encoding="utf-8") # dataframe with 3 columns -  rows are paragraphs
+data_origin = pd.read_table("speech_data_extend.txt", encoding="utf-8") # dataframe with 3 columns -  rows are paragraphs
 #len(data)
 #data = data.to_string()
 #data.shape
@@ -65,7 +65,6 @@ ps = PorterStemmer()
 data = [[ ps.stem(w) for w in doc] for doc in data] 
 
 
-
 # 5 & 6 . Compute the corpus-level tf-idf score for every term, and choose a cutoﬀ below which to remove word - Form the document-term matrix
 
 # Create a new list with all words, by collapsing the sublists in "data" into a single list
@@ -79,7 +78,7 @@ df = {key: 0 for key in all_words}
 for key,value in df.items():
     for doc in data:
         if key in doc:
-            df[key] +=1
+            df[key] +=1 # add one for each document for which word appears
 
 
 # Initialise a dictionary to compute the idf for each term
@@ -99,7 +98,6 @@ idf = {key: 0 for key in all_words}
 #    burb_idf[key] = np.log(2/burb_df[key])
 #burb_tf = {key: 0 for key in burb_all}
 #burb_tf = Counter(x for sublist in burb for x in sublist)
-
 
 ndocs = len(data)
 
@@ -137,7 +135,7 @@ y = sorted(d.values(), reverse = True)
 plt.plot(y)
 plt.show()
 
-# Save new words nuder new_words
+# Save new words under new_words
 new_words = [key for key in d]
 
 
@@ -147,30 +145,55 @@ dt_matrix.index = new_words
 dt_matrix.shape
 
 # Save the document-term matrix for future use
-dt_matrix.to_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/dt_matrix.csv", sep = ";", index=True)
+dt_matrix.to_csv("dt_matrix.csv", sep = ";", index=True)
 
 # Retrieve the saved document-term matrix
-dt_matrix = pd.DataFrame.from_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/dt_matrix.csv", sep = ";", index_col = 0)
+dt_matrix = pd.DataFrame.from_csv("dt_matrix.csv", sep = ";", index_col = 0)
+
+
 ################## Run Analysis ####################
+
+
 # A create dictionary to assess heterogeneaity 
 d = pd.read_excel("LoughranMcDonald_MasterDictionary_2014.xlsx")
-d.shape
-d.dtypes
+#d.shape
+#d.dtypes
+dic = d[['Word', 'Negative']].copy()
+
+dic = dic[dic.Negative != 0]
+dic = dic[['Word']].copy()
+dic_stemmer = PorterStemmer()
+
+# test
+#stemmer = PorterStemmer()
+#plurals = ['caresses', 'flies', 'dies', 'mules', 'denied',
+          # 'died', 'agreed', 'owned', 'humbled', 'sized',
+          #  'meeting', 'stating', 'siezing', 'itemization',
+           #'sensational', 'traditional', 'reference', 'colonizer',
+          #'plotted']
+#singles = [stemmer.stem(plural) for plural in plurals]
+#print(' '.join(singles))
+
+dic_list = dic['Word'].tolist()
+dic_s = [str(w).lower() for w in dic_list]
+dic = [dic_stemmer.stem(x) for x in dic_s]
+dic = set(dic)
+dic = [x for x in iter(dic)]
+dic = pd.DataFrame({'neg': dic})
 
 
-dic = d.to_string()
-dic_tok = (word_tokenize(dic))
-len(dic_tok)
+data_hom = pd.DataFrame(data)
+year = data_origin.iloc[:,2]
+year = pd.DataFrame(year, columns = ["year"])
+dic_data = data_hom.set_index(data_origin.index)
+dic_data['year'] = data_origin.iloc[:,2].values
+dic_data.columns = dic
 
-ps = PorterStemmer()
-dic = []
-s = d['Word']
+for i in dic:
+    dic_data[dic[i]] = FreqDist()
 
-s = pd.Series.tolist(s)
-
-for w in s:
-    stem = dic.append(ps.stem(w))
-len(dic)
+    
+    
 
 ################## Perform a SVD ####################
 
@@ -188,7 +211,7 @@ for w in tf_idf.index:
     tf_idf.loc[w] = tf.loc[w]* idf[w]
 
 # Save the tf_idf matrix to a csv file for future use
-tf_idf.to_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/tf_idf.csv", sep = ";", index=True)
+tf_idf.to_csv("tf_idf.csv", sep = ";", index=True)
 
 # Compute an SVD of the tf_idf matrix
 U, s, V = np.linalg.svd(tf_idf)
@@ -208,8 +231,6 @@ tf_idf_hat = np.matmul(np.matmul(U_hat, np.diag(s_hat)), V_hat)
 tf_idf = np.transpose(tf_idf)
 tf_idf_hat = np.transpose(tf_idf_hat)
 tf_idf_hat = pd.DataFrame(tf_idf_hat)
-
-
 
 
 
