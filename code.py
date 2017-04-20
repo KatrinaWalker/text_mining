@@ -174,6 +174,27 @@ cv_freq = np.sum(cv_results_test, axis = 1)
 cv_freq_norm = cv_freq
 for i in np.arange(len(data)):
     cv_freq_norm[i] = 100*(cv_freq_norm[i]/len(data[i]))
+    
+    
+    
+# Create a dataframe with years where most months were in recession as 1 and 0 otherwise
+recession = pd.read_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/USREC.csv", index_col = False)
+recession['DATE'] = pd.to_datetime(recession['DATE'], format='%Y-%m-%d')
+recession = recession.groupby(recession['DATE'].map(lambda x: x.year)).mean().round()
+recession['year'] = recession.index
+
+# Select data only for years above 1854 and join the recession indicator for the relevant years
+data_rec = data_origin[data_origin['year'] >= 1854]
+data_rec = data_rec.join(recession['USREC'], on = 'year', how = 'left')
+
+# Select the term frequencies for the dictionary for the documents from 1854
+cv_corr = pd.DataFrame(cv_freq_norm)
+cv_corr.index = data_origin['year']
+cv_corr = cv_corr[cv_corr.index >= 1854]
+
+# Calculate the correlation coefficient
+corr_rec = np.corrcoef(cv_corr.iloc[:,0], data_rec['USREC'])
+print("the correlation coefficient between our dictionary and the data is", corr_rec[1,0])
 
 ################## Perform a SVD ####################
 
