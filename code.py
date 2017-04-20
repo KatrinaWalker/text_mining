@@ -43,7 +43,7 @@ type(data)
 # 2. Remove non-alphabetic characters
 
 # Get rid of all empty entries, punctuation and numbers in the list
-data = [[ w for w in doc if (w != '' and w not in string.punctuation and not any(char.isdigit() for char in w)) ] for doc in data] 
+data = [[ w for w in doc if (w != '' and w not in string.punctuation and not any(char.isdigit() for char in w)) ] for doc in data]
 len(data)
 
 # 3. Remove stopwords using a list of your choice
@@ -51,25 +51,25 @@ from nltk.corpus import stopwords
 #set(stopwords.words('english'))
 
 stop_words = set(stopwords.words('english'))
-data = [[ w for w in doc if w  not in stop_words ] for doc in data] 
+data = [[ w for w in doc if w  not in stop_words ] for doc in data]
 
 #blob = [['this', 'of', '68,000', ',', 'has', 'in', 'punctuation'], ['the', '?', 'secondary', '25', 'am', 'stringy', 'listings']]
-#blob = [[ w for w in doc if w  not in stop_words ] for doc in blob] 
-#blob = [[ ps.stem(w) for w in doc] for doc in blob] 
+#blob = [[ w for w in doc if w  not in stop_words ] for doc in blob]
+#blob = [[ ps.stem(w) for w in doc] for doc in blob]
 
 
-# 4. Stem the data using the Porter stemmer 
+# 4. Stem the data using the Porter stemmer
 from nltk.stem.porter import PorterStemmer
 
 ps = PorterStemmer()
-data = [[ ps.stem(w) for w in doc] for doc in data] 
+data = [[ ps.stem(w) for w in doc] for doc in data]
 
 
 # 5 & 6 . Compute the corpus-level tf-idf score for every term, and choose a cutoﬀ below which to remove word - Form the document-term matrix
 
 # Create a new list with all words, by collapsing the sublists in "data" into a single list
 all_words = sum(data, [])
-    
+
 # Initialise dictionary to count document frequency of each term
 df = {key: 0 for key in all_words}
 #print(df)
@@ -111,12 +111,12 @@ tf = {key: 0 for key in all_words}
 
 #print(all_words)
 
-from collections import Counter    
+from collections import Counter
 tf = Counter(x for sublist in data for x in sublist)
 
 for key,value in tf.items():
     tf[key] = 1 + np.log(tf[key])
-    
+
 # Calculate corpus-wide tf-idf for each term
 tf_idf = {key: 0 for key in all_words}
 for key,value in tf_idf.items():
@@ -154,7 +154,7 @@ dt_matrix = pd.DataFrame.from_csv("dt_matrix.csv", sep = ";", index_col = 0)
 ################## Run Analysis ####################
 
 
-# A create dictionary to assess heterogeneaity 
+# A create dictionary to assess heterogeneaity
 d = pd.read_excel("LoughranMcDonald_MasterDictionary_2014.xlsx")
 #d.shape
 #d.dtypes
@@ -179,21 +179,38 @@ dic_s = [str(w).lower() for w in dic_list]
 dic = [dic_stemmer.stem(x) for x in dic_s]
 dic = set(dic)
 dic = [x for x in iter(dic)]
-dic = pd.DataFrame({'neg': dic})
+#dic = pd.DataFrame({'neg': dic})
 
 
 data_hom = pd.DataFrame(data)
 year = data_origin.iloc[:,2]
 year = pd.DataFrame(year, columns = ["year"])
-dic_data = data_hom.set_index(data_origin.index)
+dic_data = data.set_index(data_origin.index)
 dic_data['year'] = data_origin.iloc[:,2].values
-dic_data.columns = dic
 
-for i in dic:
-    dic_data[dic[i]] = FreqDist()
+dic_data_zero = pd.DataFrame(0, index = np.arange(len(dic_data.index)), columns = np.arange(len(dic)))
+dic_data_zero.columns = dic
 
-    
-    
+dic_data_test = pd.concat([data, dic_data_zero], axis = 1)
+dic_data_test.shape
+
+#for i in np.arange(len(dic_data_zero.columns)):
+ #   for j in dic_data_zero.index:
+  #      dic_data_zero.iloc[j,i] = data[j].count(dic[i])
+
+#blabla = [['sad', 'booya', 'seriou'], ['seriou', 'bonga']]
+#bloblo = ['sad booya seriou', 'seriou bonga']
+
+data_2 = [' '.join(doc) for doc in data]
+
+import sklearn
+from sklearn.feature_extraction.text import CountVectorizer
+cv = sklearn.feature_extraction.text.CountVectorizer(vocabulary=dic)
+cv_results = cv.fit_transform(data_2)
+
+
+print(data[0].count(dic[0]))
+print(dic[0])
 
 ################## Perform a SVD ####################
 
@@ -267,18 +284,7 @@ print('cosine similarity within recession years', np.mean(cosine_rec_hat))
 print('cosine similarity within growth years', np.mean(cosine_grow_hat))
 print('cosine similarity between recession and growth years', np.mean(cosine_cross_hat))
 
-
-
-
 ################## Program using EM Algorithm ####################
-
-
-
-
-
-
-
-
 
 
 
