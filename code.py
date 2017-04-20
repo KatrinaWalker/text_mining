@@ -5,7 +5,6 @@ Created on Sat Apr  8 07:51:31 2017
 
 @author: k2
 """
-import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -198,42 +197,28 @@ print("the correlation coefficient between our dictionary and the data is", corr
 
 
 
-######## PART D
-
+######### PART D
 # Create a new list with all words, by collapsing the sublists in "data" into a single list
-
 # dic_all_words = sum(data, [])    dic alrady in list of str 
-
 # Initialise dictionary to count document frequency of each term
 #df = {key: 0 for key in all_words}
 df_dic = {key: 0 for key in dic}
 #print(df)
-
 # Iterator: for each word, iterate over every document. If word is present in text, +1 to value for that word.
 #for key,value in df.items():
  #   for doc in data:
   #      if key in doc:
    #         df[key] +=1 # add one for each document for which word appears
-        
-               
-new_dic = [key for key in df_dic]
-               
-dt_dic = pd.DataFrame([doc.count(w) for doc in data] for w in new_dic)
-
                
 # Iterator: for each word, iterate over every document. If word is present in text, +1 to value for that word.
 for key,value in df_dic.items():
     for doc in data:
         if key in doc:
             df_dic[key] +=1 # add one for each document for which word appears
-
-
 # Initialise a dictionary to compute the idf for each term
 df_dic = {key: value for key,value in df_dic.items() if df_dic[key] !=0}
 idf_dic = {key: 0 for key in df_dic if df_dic[key] !=0}
-
 ndocs = len(data)
-
 # Compute idf for each word
 for key,value in df_dic.items():
     idf_dic[key] = np.log(ndocs/df_dic[key])
@@ -243,17 +228,18 @@ new_dic = [key for key in df_dic]
                
 dt_dic = pd.DataFrame([doc.count(w) for doc in data] for w in new_dic)
 dt_dic.index = new_dic
-
 tf_dic = pd.DataFrame(np.where(dt_dic == 0, 0, 1 + np.log(dt_dic)))
 tf_dic.index = new_dic
-
 tf_idf_dic = tf_dic
-
 for w in tf_idf_dic.index:
     tf_idf_dic.loc[w] = tf_dic.loc[w]*idf_dic[w]
-
-
-
+tf_idf_dic = np.transpose(tf_idf_dic)
+tf_idf_avg = np.sum(tf_idf_dic, axis = 1)
+cv_corr2 = pd.DataFrame(tf_idf_avg)
+cv_corr2.index = data_origin['year']
+cv_corr2 = cv_corr2[cv_corr2.index >= 1854]
+corr2_rec = np.corrcoef(cv_corr2.iloc[:,0], data_rec['USREC'])
+print("the correlation coefficient between our dictionary and the data is", corr2_rec[1,0])
 
 
 
