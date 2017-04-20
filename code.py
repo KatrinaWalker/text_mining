@@ -242,7 +242,6 @@ corr2_rec = np.corrcoef(cv_corr2.iloc[:,0], data_rec['USREC'])
 print("the correlation coefficient between our dictionary and the data is", corr2_rec[1,0])
 
 
-
 ################## Perform a SVD ####################
 
 # Generate a tf-idf-weighted document-term matrix
@@ -259,9 +258,9 @@ for w in tf_idf.index:
     tf_idf.loc[w] = tf.loc[w]* idf[w]
 
 # Save the tf_idf matrix to a csv file for future use
-tf_idf.to_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/tf_idf.csv", sep = ";", index=True)
+tf_idf.to_csv("tf_idf.csv", sep = ";", index=True)
 
-tf_idf = pd.DataFrame.from_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/tf_idf.csv", sep = ";", index_col = 0)
+tf_idf = pd.DataFrame.from_csv("tf_idf.csv", sep = ";", index_col = 0)
 tf_idf = np.transpose(tf_idf)
 
 
@@ -282,7 +281,7 @@ tf_idf_hat = np.matmul(np.matmul(U_hat, np.diag(s_hat)), V_hat)
 tf_idf_hat.shape
 
 # Create a dataframe with years where most months were in recession as 1 and 0 otherwise
-recession = pd.read_csv("/Users/davidrosenfeld/Documents/text_mining_course/text_mining/USREC.csv", index_col = False)
+recession = pd.read_csv("USREC.csv", index_col = False)
 recession['DATE'] = pd.to_datetime(recession['DATE'], format='%Y-%m-%d')
 recession = recession.groupby(recession['DATE'].map(lambda x: x.year)).mean().round()
 recession['year'] = recession.index
