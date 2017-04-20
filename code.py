@@ -53,10 +53,6 @@ from nltk.corpus import stopwords
 stop_words = set(stopwords.words('english'))
 data = [[ w for w in doc if w  not in stop_words ] for doc in data]
 
-#blob = [['this', 'of', '68,000', ',', 'has', 'in', 'punctuation'], ['the', '?', 'secondary', '25', 'am', 'stringy', 'listings']]
-#blob = [[ w for w in doc if w  not in stop_words ] for doc in blob]
-#blob = [[ ps.stem(w) for w in doc] for doc in blob]
-
 
 # 4. Stem the data using the Porter stemmer
 from nltk.stem.porter import PorterStemmer
@@ -84,20 +80,6 @@ for key,value in df.items():
 # Initialise a dictionary to compute the idf for each term
 idf = {key: 0 for key in all_words}
 
-
-#burb = [['aga', 'opi', 'ela', 'opi', '1981.', '100,000'], ['palo', 'pali', 'ela', 'opi']]
-#burb = [[ w for w in doc if (w != '' and w not in string.punctuation and not any(char.isdigit() for char in w)) ] for doc in burb]
-#burb_all = sum(burb, [])
-#burb_df = {key: 0 for key in burb_all}
-#for key,value in burb_df.items():
-#    for doc in burb:
-#        if key in doc:
-#            burb_df[key] +=1
-#burb_idf = {key: 0 for key in burb_all}
-#for key,value in burb_df.items():
-#    burb_idf[key] = np.log(2/burb_df[key])
-#burb_tf = {key: 0 for key in burb_all}
-#burb_tf = Counter(x for sublist in burb for x in sublist)
 
 ndocs = len(data)
 
@@ -181,36 +163,17 @@ dic = set(dic)
 dic = [x for x in iter(dic)]
 #dic = pd.DataFrame({'neg': dic})
 
-
-data_hom = pd.DataFrame(data)
-year = data_origin.iloc[:,2]
-year = pd.DataFrame(year, columns = ["year"])
-dic_data = data.set_index(data_origin.index)
-dic_data['year'] = data_origin.iloc[:,2].values
-
-dic_data_zero = pd.DataFrame(0, index = np.arange(len(dic_data.index)), columns = np.arange(len(dic)))
-dic_data_zero.columns = dic
-
-dic_data_test = pd.concat([data, dic_data_zero], axis = 1)
-dic_data_test.shape
-
-#for i in np.arange(len(dic_data_zero.columns)):
- #   for j in dic_data_zero.index:
-  #      dic_data_zero.iloc[j,i] = data[j].count(dic[i])
-
-#blabla = [['sad', 'booya', 'seriou'], ['seriou', 'bonga']]
-#bloblo = ['sad booya seriou', 'seriou bonga']
-
 data_2 = [' '.join(doc) for doc in data]
 
 import sklearn
 from sklearn.feature_extraction.text import CountVectorizer
 cv = sklearn.feature_extraction.text.CountVectorizer(vocabulary=dic)
 cv_results = cv.fit_transform(data_2)
-
-
-print(data[0].count(dic[0]))
-print(dic[0])
+cv_results_test = cv_results.todense()
+cv_freq = np.sum(cv_results_test, axis = 1)
+cv_freq_norm = cv_freq
+for i in np.arange(len(data)):
+    cv_freq_norm[i] = 100*(cv_freq_norm[i]/len(data[i]))
 
 ################## Perform a SVD ####################
 
