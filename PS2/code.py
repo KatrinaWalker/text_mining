@@ -14,7 +14,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
-from sklearn.preprocessing import OneHotEncoder
 import nltk
 from nltk.corpus import stopwords
 from nltk import PorterStemmer
@@ -26,14 +25,17 @@ import topicmodels as tpm
 from nltk import word_tokenize
 from numpy.random import dirichlet
 import time
+import string
+from scipy.sparse import csr_matrix
 
 # Question 1
 
 
 ### GIBBS SAMPLER
 
-data = pd.read_table("~/Documents/text_mining_course/text_mining/PS1/speech_data_extend.txt", encoding="utf-8") 
-data = data.loc[data['year']>=1945]
+
+data = pd.read_table("~/Documents/text_mining_course/text_mining/PS2/speech_data_extend.txt", encoding="utf-8")
+data = data.loc[data['year']>=1946]
 data = data.reset_index()
 
 
@@ -47,10 +49,17 @@ def data_preparation(data):
     for i in range(len(prep_data)): #Stem the data
         prep_data[i] = [stemmer.stem(elem) for elem in prep_data[i]]
     unique_words = np.unique([word for doc in prep_data for word in doc]).tolist()
-    return prep_data, unique_words
-
-
-prep_data, unique_words = data_preparation(data)
+    D = len(prep_data)
+    V = len(unique_words)
+    X = np.zeros((D,V))
+    N = 0
+    for i in range(D):
+        N = N + len(prep_data[i])
+        aux_words_d = list(set(prep_data[i]))
+        for j in range(len(aux_words_d)):
+            X[i,unique_words.index(aux_words_d[j])] = prep_data[i].count(aux_words_d[j])
+    X = csr_matrix(X.astype(int))
+    return prep_data, unique_words, X, N
 
 #theta = dirichlet([alpha]*K,D)
 #beta = dirichlet([eta]*K,V)
@@ -61,6 +70,18 @@ prep_data, unique_words = data_preparation(data)
 # in Beta_v (which will be stored in "unique_words") with word n in Z_dn (which
 # will be stored in "prep_data").
 
+# Term count matrix
+def term_count(prep, idx):
+    # I've made the count matrix a sparse matrix to save memory and speed up perplexity calculation
+    from utils import Counter
+    D = len(stemmed)
+    V = len(get_vocab(stemmed))
+    X = np.zeros((D,V))
+    for k in range(D):
+        counts = Counter(stemmed[k])
+        for word in set(stemmed[k]):
+            X[k,idx[word]] = counts[word]
+    return ssp.csr_matrix(X.astype(int))
 
 ### Auxiliar functions Z sample
 def simulate(K, row):
@@ -118,28 +139,33 @@ def sample_beta(Z,prep_data,eta,beta):
 
 #beta = sample_beta(Z,prep_data,eta,beta)
 
-def gibbs_sampler(n_iter,prep_data,alpha,eta,K):
+def gibbs_sampler(n_iter,prep_data,alpha,eta, K, X, N, prop_perplexity):
     ## Initialize objects
     D = len(prep_data)
     theta = dirichlet([alpha]*K,D)
     beta = dirichlet([eta]*K,V)
     Z = prep_data.apply(lambda row: simulate(K,row))
-    Z_dist = []
+    #Z_dist = []
     theta_dist = []
-    beta_dist = []
+    #beta_dist = []
+    perplexity = []
     for i in range(n_iter):
         print('Iteration nº:'+ str(i))
         start = time.time()
         Z = sample_topic(Z,theta,beta)
         theta = sample_theta(Z,alpha,theta)
         beta = sample_beta(Z,prep_data,eta,beta)
-        Z_dist.append(Z)
+        if (i % (round(n_iter * prop_perplexity) + 1)) == 0:
+            perplexity.append(np.exp(-np.sum(X.multiply(np.log(theta.dot(beta.T))))/N))
+        #Z_dist.append(Z)
         theta_dist.append(theta)
-        beta_dist.append(beta)
+        #beta_dist.append(beta)
         print('Duration:'+ str(time.time()-start))
-    return Z_dist, theta_dist, beta_dist
+    return theta_dist, perplexity
 
 ### Initial parameters
+prep_data, unique_words, X, N = data_preparation(data)
+
 #D = len(prep_data) #Number of documents
 #V = len(unique_words)#Number of unique terms
 #Z = prep_data.apply(lambda row: simulate(K,row)) #Z_dn
@@ -147,12 +173,12 @@ def gibbs_sampler(n_iter,prep_data,alpha,eta,K):
 #M = np.zeros((K,V))
 
 #Initial values (reference original paper)
-K = 10 #Number of topics
+K = 2 #Number of topics
 alpha = 50/K
+V = len(unique_words)
 eta = 200/V
 
-Z_2, theta_2, beta_2 = gibbs_sampler(5000,prep_data, alpha, eta, K)
-
+theta_2, perplex_2 = gibbs_sampler(10, prep_data, alpha, eta, K, X, N, 0.05)
 
 
 
@@ -161,10 +187,10 @@ Z_2, theta_2, beta_2 = gibbs_sampler(5000,prep_data, alpha, eta, K)
 
 
 # Import the original data
-data_origin = pd.read_table("~/Documents/text_mining_course/text_mining/PS1/speech_data_extend.txt", encoding="utf-8") 
-dt_matrix = pd.DataFrame.from_csv("~/Documents/dt_matrix.csv", sep = ";", index_col = 0) 
+data_origin = pd.read_table("~/Documents/text_mining_course/text_mining/PS2/speech_data_extend.txt", encoding="utf-8") 
+dt_matrix = pd.DataFrame.from_csv("~/Documents/text_mining_course/text_mining/PS2/dt_matrix.csv", sep = ";", index_col = 0) 
 
-X = dt_matrix.iloc[:][data_origin.year >= 1945]
+X = dt_matrix.iloc[:][data_origin.year >= 1946]
 X = ssp.csr_matrix(X.astype(int))
 
 K = 2
@@ -184,8 +210,39 @@ Col_Gibbs.perplexity()
 
 word_topics = Col_Gibbs.tt 
 doc_topics = Col_Gibbs.dt 
+Col_Gibbs.sample(burn_samples,jumps,used_samples)
+plt.plot(Col_Gibbs.perplexity())
+plt.show()
 
 
+# Plot perplexity for the uncollapsed Gibbs sampler for different number of topics
+K = 2
+theta_2, perplex_2 = gibbs_sampler(100, prep_data, alpha, eta, K, X, N, 0.05)
+plt.plot(perplex_2)
+plt.show()
+K = 5
+theta_2, perplex_2 = gibbs_sampler(100, prep_data, alpha, eta, K, X, N, 0.05)
+plt.plot(perplex_2)
+plt.show()
+K = 10
+theta_2, perplex_2 = gibbs_sampler(100, prep_data, alpha, eta, K, X, N, 0.05)
+plt.plot(perplex_2)
+plt.show()
+
+
+# Plot perplexity for the collapsed Gibbs sampler for different number of topics
+K = 2
+Col_Gibbs.sample(burn_samples,jumps,used_samples)
+plt.plot(Col_Gibbs.perplexity())
+plt.show()
+K = 5
+Col_Gibbs.sample(burn_samples,jumps,used_samples)
+plt.plot(Col_Gibbs.perplexity())
+plt.show()
+K = 10
+Col_Gibbs.sample(burn_samples,jumps,used_samples)
+plt.plot(Col_Gibbs.perplexity())
+plt.show()
 
 # Question 3
 
